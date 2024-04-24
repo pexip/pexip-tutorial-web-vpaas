@@ -1,14 +1,23 @@
 import { Box, BoxHeader, Button } from '@pexip/components'
-// TODO (01) Import useNavigate from react-router-dom
-// TODO (02) Import config
+import { useNavigate } from 'react-router-dom'
+import { config } from '../config'
 
 import './CreateMeeting.css'
 
 export const CreateMeeting = (): JSX.Element => {
-  // TODO (03) Create a navigate function using useNavigate
+  const navigate = useNavigate()
+
   const handleClick = async (): Promise<void> => {
-    // TODO (04) Use the our API to create the meeting
-    // TODO (05) Navigate to the meeting page
+    const url = config.server
+    try {
+      const response = await fetch(`${url}/meetings`, {
+        method: 'POST'
+      })
+      const data = await response.json()
+      navigate(`/meetings/${data.id}`)
+    } catch (e) {
+      console.error('Cannot create the meeting')
+    }
   }
 
   return (
