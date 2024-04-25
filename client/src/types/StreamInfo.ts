@@ -1,1 +1,6 @@
-// TODO (01) Define the StreamInfo interface
+export interface StreamInfo {
+  streamId: string
+  type: 'audio' | 'video'
+  participantId: string
+  mid?: string
+}
