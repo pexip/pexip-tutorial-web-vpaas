@@ -1,22 +1,96 @@
 import { Grid } from '@pexip/components'
-// TODO (09) Import dependency StreamInfo
-// TODO (10) Import dependency TransceiverConfig
-// TODO (11) Import dependency Participant
+import { type StreamInfo } from '../../types/StreamInfo'
+import { type TransceiverConfig } from '@pexip/peer-connection'
+import { Participant } from './Participant'
 
 import './RemoteParticipants.css'
 
-// TODO (12) Define the RemoteParticipants props interface
+interface RemoteParticipantsProps {
+  remoteParticipantsIds: string[]
+  streamsInfo: StreamInfo[]
+  remoteTransceiversConfig: TransceiverConfig[]
+}
 
-// TODO (13) Define the component props
-export const RemoteParticipants = (): JSX.Element => {
-  // TODO (14) Deconstruct the props
+export const RemoteParticipants = (
+  props: RemoteParticipantsProps
+): JSX.Element => {
+  const { remoteParticipantsIds, streamsInfo, remoteTransceiversConfig } = props
 
-  // TODO (15) Define the function getMediaStreams
+  const getMediaStreams = (
+    participantId: string
+  ): {
+    audioStream: MediaStream | null
+    videoStream: MediaStream | null
+  } => {
+    const audioMid = streamsInfo.find((streamInfo) => {
+      return (
+        streamInfo.participantId === participantId &&
+        streamInfo.type === 'audio'
+      )
+    })?.mid
+    const videoMid = streamsInfo.find((streamInfo) => {
+      return (
+        streamInfo.participantId === participantId &&
+        streamInfo.type === 'video'
+      )
+    })?.mid
 
-  // TODO (16) Calculate the number of remote participants and md
+    const audioTransceiverConfig =
+      audioMid != null
+        ? remoteTransceiversConfig.find(
+            (transceiverConfig) =>
+              transceiverConfig.transceiver?.mid === audioMid
+          )
+        : null
+    const videoTransceiverConfig =
+      videoMid != null
+        ? remoteTransceiversConfig.find(
+            (transceiverConfig) =>
+              transceiverConfig.transceiver?.mid === videoMid
+          )
+        : null
 
-  // TODO (17) Create an array of components for participants
+    const audioStream =
+      audioTransceiverConfig?.remoteStreams != null
+        ? audioTransceiverConfig.remoteStreams[0]
+        : null
+    const videoStream =
+      videoTransceiverConfig?.remoteStreams != null
+        ? videoTransceiverConfig.remoteStreams[0]
+        : null
 
-  // TODO (18) Return the participants in a Grid component
-  return <Grid className="RemoteParticipants"></Grid>
+    return {
+      audioStream,
+      videoStream
+    }
+  }
+
+  const totalStreams = remoteParticipantsIds.length
+  const columns = Math.ceil(Math.sqrt(totalStreams))
+  const md = Math.max(Math.round(12 / columns), 1) as any
+
+  const participants = remoteParticipantsIds.map((participantId) => {
+    const { audioStream, videoStream } = getMediaStreams(participantId)
+    return (
+      <Participant
+        participantId={participantId}
+        md={md}
+        audioStream={audioStream}
+        videoStream={videoStream}
+        key={participantId}
+      />
+    )
+  })
+
+  return (
+    <Grid
+      className="RemoteParticipants"
+      style={{
+        display: totalStreams === 1 ? 'block' : 'flex',
+        flexGrow: totalStreams < 3 ? '1' : 'initial'
+      }}
+    >
+      {participants}
+    </Grid>
+  )
 }
