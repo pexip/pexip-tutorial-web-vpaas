@@ -1,4 +1,4 @@
-// TODO (01)  Import useState from 'react'
+import { useState } from 'react'
 import { Cell, Icon, IconTypes, Video, Audio } from '@pexip/components'
 import { type Cells } from '@pexip/components/dist/types/src/components/foundation/Grid/Grid.types'
 
@@ -10,13 +10,22 @@ interface ParticipantProps {
 }
 
 export const Participant = (props: ParticipantProps): JSX.Element => {
-  // TODO (02) Define state for videoMuted
+  const [videoMuted, setVideoMuted] = useState(false)
 
-  // TODO (03) Attach handlers for "onmute" and "onunmute" events
+  const videoTracks = props.videoStream?.getVideoTracks()
+  if (videoTracks != null && videoTracks.length > 0) {
+    videoTracks[0].onmute = () => {
+      setVideoMuted(true)
+    }
+
+    videoTracks[0].onunmute = () => {
+      setVideoMuted(false)
+    }
+  }
+
   return (
     <Cell className="Cell" xs={12} md={props.md}>
-      {/* TODO (04) Add a conditional rendering for the video stream when unmuted */}
-      {props.videoStream != null && (
+      {props.videoStream != null && !videoMuted && (
         <Video
           className="RemoteVideo"
           title={props.participantId}
@@ -24,8 +33,7 @@ export const Participant = (props: ParticipantProps): JSX.Element => {
           style={{ objectFit: 'cover' }}
         />
       )}
-      {/* TODO (05) Add a conditional rendering for the video stream when muted */}
-      {props.videoStream == null && (
+      {(props.videoStream == null || videoMuted) && (
         <div className="NoStreamContainer">
           <Icon
             className="ParticipantIcon"

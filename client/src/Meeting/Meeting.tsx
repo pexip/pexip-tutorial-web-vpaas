@@ -1,5 +1,4 @@
-// TODO (18) Add useMemo to the import statement
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   createVpaas,
@@ -14,7 +13,7 @@ import { type StreamInfo } from '../types/StreamInfo'
 import { config } from '../config'
 import { RemoteParticipants } from './RemoteParticipants/RemoteParticipants'
 import { Selfview } from '@pexip/media-components'
-// TODO (19) Add the import statement for Toolbar
+import { Toolbar } from './Toolbar/Toolbar'
 
 import './Meeting.css'
 
@@ -171,7 +170,12 @@ export const Meeting = (): JSX.Element => {
     vpaas.connect({ mediaInits })
   }
 
-  // TODO (20) Create function isStreamActive
+  const isStreamActive = (stream: MediaStream | undefined): boolean => {
+    return (
+      stream?.getVideoTracks().some((track) => track.readyState === 'live') ??
+      false
+    )
+  }
 
   useEffect(() => {
     const bootstrap = async (): Promise<void> => {
@@ -227,7 +231,23 @@ export const Meeting = (): JSX.Element => {
     )
   }
 
-  // TODO (21) useMemo in the Selfview component
+  const videoTracks = localStream?.getVideoTracks()
+  const videoTrackId =
+    videoTracks != null && videoTracks.length !== 0 ? videoTracks[0].id : ''
+
+  // Only re-render the selfie if the videoTrack id changes
+  const selfie = useMemo(
+    (): JSX.Element => (
+      <Selfview
+        className="SelfView"
+        isVideoInputMuted={false}
+        shouldShowUserAvatar={false}
+        username="User"
+        localMediaStream={localStream}
+      />
+    ),
+    [videoTrackId]
+  )
 
   return (
     <div className="Meeting">
@@ -244,18 +264,16 @@ export const Meeting = (): JSX.Element => {
       )}
 
       <div className="PipContainer">
-        {/* TODO (22) Add the rendering condition isStreamActive and change Selfview for the memoized version */}
-        <Selfview
-          className="SelfView"
-          isVideoInputMuted={false}
-          shouldShowUserAvatar={false}
-          username="User"
-          localMediaStream={localStream}
-          isMirrored={true}
-        />
-
-        {/* TODO (23) Create the Toolbar */}
+        {isStreamActive(localStream) && selfie}
       </div>
+
+      {vpaas != null && (
+        <Toolbar
+          vpaas={vpaas}
+          localStream={localStream}
+          onLocalStreamChange={setLocalStream}
+        />
+      )}
     </div>
   )
 }

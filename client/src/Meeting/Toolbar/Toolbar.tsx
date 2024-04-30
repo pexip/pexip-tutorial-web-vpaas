@@ -1,27 +1,128 @@
-// TODO (06) Import all the necessary dependencies
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { type Vpaas } from '@pexip/vpaas-sdk'
+import { Button, Icon, IconTypes, Tooltip } from '@pexip/components'
 
 import './Toolbar.css'
 
-// TODO (07) Define the ToolbarProps interface
+interface ToolbarProps {
+  vpaas: Vpaas
+  localStream: MediaStream | undefined
+  onLocalStreamChange: (stream: MediaStream | undefined) => void
+}
 
-// TODO (08) Define the Toolbar input props
-export const Toolbar = (): JSX.Element => {
-  // TODO (09) Define the navigate through the useNavigate hook
+export const Toolbar = (props: ToolbarProps): JSX.Element => {
+  const navigate = useNavigate()
 
-  // TODO (10) Define the state for audioMuted
-  // TODO (11) Define the state for videoMuted
+  const [audioMuted, setAudioMuted] = useState(false)
+  const [videoMuted, setVideoMuted] = useState(false)
 
-  // TODO (12) Define the handlePressAudioMute function
+  const handlePressMuteAudio = async (): Promise<void> => {
+    if (!audioMuted) {
+      props.localStream?.getAudioTracks().forEach((track) => {
+        track.stop()
+      })
+    } else {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false
+      })
+      if (!videoMuted) {
+        const audioTrack = props.localStream?.getVideoTracks()[0]
+        if (audioTrack != null) {
+          newStream.addTrack(audioTrack)
+        }
+      }
+      props.vpaas.setStream(newStream)
+      props.onLocalStreamChange(newStream)
+    }
+    setAudioMuted(!audioMuted)
+  }
 
-  // TODO (13) Define the handlePressVideoMute function
+  const handlePressMuteVideo = async (): Promise<void> => {
+    if (!videoMuted) {
+      props.localStream?.getVideoTracks().forEach((track) => {
+        track.stop()
+      })
+      const clonedStream = props.localStream?.clone()
+      props.localStream?.getAudioTracks().forEach((track) => {
+        track.stop()
+      })
+      props.onLocalStreamChange(clonedStream)
+    } else {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: true
+      })
+      if (!audioMuted) {
+        const audioTrack = props.localStream?.getAudioTracks()[0]
+        if (audioTrack != null) {
+          newStream.addTrack(audioTrack)
+        }
+      }
+      props.onLocalStreamChange(newStream)
+      props.vpaas.setStream(newStream)
+    }
+    setVideoMuted(!videoMuted)
+  }
 
-  // TODO (14) Define the handlePressDisconnect function
+  const handlePressDisconnect = (): void => {
+    props.localStream?.getTracks().forEach((track) => {
+      track.stop()
+    })
+    props.vpaas.disconnect()
+    navigate('/meetings')
+  }
 
   return (
     <div className="Toolbar">
-      {/* TODO (15) Add the AudioMute button */}
-      {/* TODO (16) Add the VideoMute button */}
-      {/* TODO (17) Add the Disconnect button */}
+      <Tooltip text={`${audioMuted ? 'Unmute' : 'Mute'} audio`}>
+        <Button
+          variant="translucent"
+          modifier="square"
+          onClick={() => {
+            handlePressMuteAudio().catch((e) => {
+              console.error(e)
+            })
+          }}
+          isActive={audioMuted}
+        >
+          <Icon
+            source={
+              audioMuted
+                ? IconTypes.IconMicrophoneOff
+                : IconTypes.IconMicrophoneOn
+            }
+          />
+        </Button>
+      </Tooltip>
+
+      <Tooltip text={`${videoMuted ? 'Unmute' : 'Mute'} video`}>
+        <Button
+          variant="translucent"
+          modifier="square"
+          onClick={() => {
+            handlePressMuteVideo().catch((e) => {
+              console.error(e)
+            })
+          }}
+          isActive={videoMuted}
+        >
+          <Icon
+            source={videoMuted ? IconTypes.IconVideoOff : IconTypes.IconVideoOn}
+          />
+        </Button>
+      </Tooltip>
+
+      <Tooltip text="Disconnect">
+        <Button
+          variant="danger"
+          modifier="square"
+          onClick={handlePressDisconnect}
+        >
+          <Icon source={IconTypes.IconLeave} />
+        </Button>
+      </Tooltip>
     </div>
   )
 }
