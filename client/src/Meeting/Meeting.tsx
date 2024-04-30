@@ -1,3 +1,4 @@
+// TODO (18) Add useMemo to the import statement
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
@@ -13,6 +14,7 @@ import { type StreamInfo } from '../types/StreamInfo'
 import { config } from '../config'
 import { RemoteParticipants } from './RemoteParticipants/RemoteParticipants'
 import { Selfview } from '@pexip/media-components'
+// TODO (19) Add the import statement for Toolbar
 
 import './Meeting.css'
 
@@ -169,6 +171,8 @@ export const Meeting = (): JSX.Element => {
     vpaas.connect({ mediaInits })
   }
 
+  // TODO (20) Create function isStreamActive
+
   useEffect(() => {
     const bootstrap = async (): Promise<void> => {
       if (vpaas == null) {
@@ -223,6 +227,8 @@ export const Meeting = (): JSX.Element => {
     )
   }
 
+  // TODO (21) useMemo in the Selfview component
+
   return (
     <div className="Meeting">
       {remoteParticipantsIds.length > 0 && (
@@ -238,6 +244,7 @@ export const Meeting = (): JSX.Element => {
       )}
 
       <div className="PipContainer">
+        {/* TODO (22) Add the rendering condition isStreamActive and change Selfview for the memoized version */}
         <Selfview
           className="SelfView"
           isVideoInputMuted={false}
@@ -246,6 +253,8 @@ export const Meeting = (): JSX.Element => {
           localMediaStream={localStream}
           isMirrored={true}
         />
+
+        {/* TODO (23) Create the Toolbar */}
       </div>
     </div>
   )
