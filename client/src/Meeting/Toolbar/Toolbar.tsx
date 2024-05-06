@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { type Vpaas } from '@pexip/vpaas-sdk'
 import { Button, Icon, IconTypes, Tooltip } from '@pexip/components'
+// TODO (43) Import filterMediaDevices function from filter-media-devices.ts
 
 import './Toolbar.css'
 
@@ -9,6 +10,7 @@ interface ToolbarProps {
   vpaas: Vpaas
   localStream: MediaStream | undefined
   onLocalStreamChange: (stream: MediaStream | undefined) => void
+  // TODO (44) Add onSettingsOpen property with void return type
 }
 
 export const Toolbar = (props: ToolbarProps): JSX.Element => {
@@ -23,6 +25,9 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
         track.stop()
       })
     } else {
+      // TODO (45) Get devices using navigator.mediaDevices.enumerateDevices
+      // TODO (46) Filter devices using filterMediaDevices function
+      // TODO (47) Get newStream using navigator.mediaDevices.getUserMedia with audio deviceId
       const newStream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false
@@ -50,6 +55,9 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
       })
       props.onLocalStreamChange(clonedStream)
     } else {
+      // TODO (45) Get devices using navigator.mediaDevices.enumerateDevices
+      // TODO (46) Filter devices using filterMediaDevices function
+      // TODO (47) Get newStream using navigator.mediaDevices.getUserMedia with video deviceId
       const newStream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: true
@@ -113,6 +121,8 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
           />
         </Button>
       </Tooltip>
+
+      {/* TODO (48) Add Button component to display the settings */}
 
       <Tooltip text="Disconnect">
         <Button

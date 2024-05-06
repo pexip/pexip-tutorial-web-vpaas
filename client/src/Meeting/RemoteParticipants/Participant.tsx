@@ -7,6 +7,7 @@ interface ParticipantProps {
   md: Cells | undefined
   audioStream: MediaStream | null
   videoStream: MediaStream | null
+  // TODO (39) Add sinkId property with string type
 }
 
 export const Participant = (props: ParticipantProps): JSX.Element => {
@@ -42,7 +43,11 @@ export const Participant = (props: ParticipantProps): JSX.Element => {
         </div>
       )}
       {props.audioStream != null && (
-        <Audio srcObject={props.audioStream} autoPlay={true} />
+        <Audio
+          srcObject={props.audioStream}
+          autoPlay={true}
+          // TODO (40) Add sinkId prop with props.sinkId value
+        />
       )}
     </Cell>
   )
