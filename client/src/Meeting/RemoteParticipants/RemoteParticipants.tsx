@@ -9,7 +9,7 @@ interface RemoteParticipantsProps {
   remoteParticipantsIds: string[]
   streamsInfo: StreamInfo[]
   remoteTransceiversConfig: TransceiverConfig[]
-  // TODO (41) Add sinkId property with string type
+  sinkId: string
 }
 
 export const RemoteParticipants = (
@@ -79,7 +79,7 @@ export const RemoteParticipants = (
         audioStream={audioStream}
         videoStream={videoStream}
         key={participantId}
-        // TODO (42) Add sinkId prop with props.sinkId value
+        sinkId={props.sinkId}
       />
     )
   })

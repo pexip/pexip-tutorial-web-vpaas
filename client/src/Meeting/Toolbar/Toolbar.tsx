@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { type Vpaas } from '@pexip/vpaas-sdk'
 import { Button, Icon, IconTypes, Tooltip } from '@pexip/components'
-// TODO (43) Import filterMediaDevices function from filter-media-devices.ts
+import { filterMediaDevices } from '../../filter-media-devices'
 
 import './Toolbar.css'
 
@@ -10,7 +10,7 @@ interface ToolbarProps {
   vpaas: Vpaas
   localStream: MediaStream | undefined
   onLocalStreamChange: (stream: MediaStream | undefined) => void
-  // TODO (44) Add onSettingsOpen property with void return type
+  onSettingsOpen: () => void
 }
 
 export const Toolbar = (props: ToolbarProps): JSX.Element => {
@@ -25,11 +25,12 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
         track.stop()
       })
     } else {
-      // TODO (45) Get devices using navigator.mediaDevices.enumerateDevices
-      // TODO (46) Filter devices using filterMediaDevices function
-      // TODO (47) Get newStream using navigator.mediaDevices.getUserMedia with audio deviceId
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const filteredDevices = await filterMediaDevices(devices)
       const newStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          deviceId: filteredDevices.audioInput?.deviceId
+        },
         video: false
       })
       if (!videoMuted) {
@@ -55,12 +56,13 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
       })
       props.onLocalStreamChange(clonedStream)
     } else {
-      // TODO (45) Get devices using navigator.mediaDevices.enumerateDevices
-      // TODO (46) Filter devices using filterMediaDevices function
-      // TODO (47) Get newStream using navigator.mediaDevices.getUserMedia with video deviceId
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const filteredDevices = await filterMediaDevices(devices)
       const newStream = await navigator.mediaDevices.getUserMedia({
         audio: false,
-        video: true
+        video: {
+          deviceId: filteredDevices.audioInput?.deviceId
+        }
       })
       if (!audioMuted) {
         const audioTrack = props.localStream?.getAudioTracks()[0]
@@ -122,7 +124,15 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
         </Button>
       </Tooltip>
 
-      {/* TODO (48) Add Button component to display the settings */}
+      <Tooltip text="Change devices">
+        <Button
+          variant="translucent"
+          modifier="square"
+          onClick={props.onSettingsOpen}
+        >
+          <Icon source={IconTypes.IconSettings} />
+        </Button>
+      </Tooltip>
 
       <Tooltip text="Disconnect">
         <Button

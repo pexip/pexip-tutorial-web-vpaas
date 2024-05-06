@@ -14,8 +14,8 @@ import { config } from '../config'
 import { RemoteParticipants } from './RemoteParticipants/RemoteParticipants'
 import { Selfview } from '@pexip/media-components'
 import { Toolbar } from './Toolbar/Toolbar'
-// TODO (49) Import filterMediaDevices function from filter-media-devices.ts
-// TODO (50) Import Settings component from './Settings/Settings'
+import { filterMediaDevices } from '../filter-media-devices'
+import { Settings } from './Settings/Settings'
 
 import './Meeting.css'
 
@@ -29,7 +29,7 @@ export const Meeting = (): JSX.Element => {
 
   const [participant, setParticipant] = useState<Participant>()
   const [localStream, setLocalStream] = useState<MediaStream>()
-  // TODO (51) Add sinkId property with string type
+  const [sinkId, setSinkId] = useState<string>('')
 
   const [remoteTransceiversConfig, setRemoteTransceiversConfig] = useState<
     TransceiverConfig[]
@@ -37,7 +37,7 @@ export const Meeting = (): JSX.Element => {
   const [roster, setRoster] = useState<Record<string, RosterEntry>>()
   const [streamsInfo, setStreamsInfo] = useState<StreamInfo[]>([])
 
-  // TODO (52) Add settingsOpen and setSettingOpen using useState hook with boolean type
+  const [settingsOpen, setSettingOpen] = useState(false)
 
   const initVpaas = (): Vpaas => {
     const vpaasSignals = createVpaasSignals()
@@ -182,22 +182,53 @@ export const Meeting = (): JSX.Element => {
     )
   }
 
-  // TODO (53) Define isAnyTrackActive function with tracks parameter with MediaStreamTrack[] | undefined type and boolean return type
+  const isAnyTrackActive = (
+    tracks: MediaStreamTrack[] | undefined
+  ): boolean => {
+    return tracks?.some((track) => track.readyState === 'live') ?? false
+  }
 
-  // TODO (54) Define getNewLocalStream function with requestAudio and requestVideo parameters with boolean type and Promise<MediaStream> return type
-  // TODO (55) Get devices using navigator.mediaDevices.enumerateDevices in getNewLocalStream function
-  // TODO (56) Filter devices using filterMediaDevices function in getNewLocalStream function
-  // TODO (57) Set sinkId in getNewLocalStream function
-  // TODO (58) Get newLocalStream using navigator.mediaDevices.getUserMedia with audio and video deviceId in getNewLocalStream function
-  // TODO (59) Return newLocalStream in getNewLocalStream function
+  const getNewLocalStream = async (
+    requestAudio: boolean,
+    requestVideo: boolean
+  ): Promise<MediaStream> => {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const filteredDevices = await filterMediaDevices(devices)
 
-  // TODO (60) Define handleSaveSettings function with void return type
-  // TODO (61) Set settingsOpen to false in handleSaveSettings function
-  // TODO (62) Check if audioActive or videoActive is true in handleSaveSettings function
-  // TODO (63) Get newLocalStream using getNewLocalStream function in handleSaveSettings function
-  // TODO (64) Stop all tracks of localStream in handleSaveSettings function
-  // TODO (65) Set localStream to newLocalStream in handleSaveSettings function
-  // TODO (66) Set stream in vpaas using newLocalStream in handleSaveSettings function
+    setSinkId(filteredDevices.audioOutput?.deviceId ?? '')
+
+    const newLocalStream = await navigator.mediaDevices.getUserMedia({
+      audio: requestAudio
+        ? {
+            deviceId: filteredDevices.audioInput?.deviceId
+          }
+        : false,
+      video: requestVideo
+        ? {
+            deviceId: filteredDevices.videoInput?.deviceId
+          }
+        : false
+    })
+    return newLocalStream
+  }
+
+  const handleSaveSettings = async (): Promise<void> => {
+    setSettingOpen(false)
+
+    const audioActive = isAnyTrackActive(localStream?.getAudioTracks())
+    const videoActive = isAnyTrackActive(localStream?.getVideoTracks())
+
+    if (audioActive || videoActive) {
+      const newLocalStream = await getNewLocalStream(audioActive, videoActive)
+
+      localStream?.getTracks().forEach((track) => {
+        track.stop()
+      })
+
+      setLocalStream(newLocalStream)
+      vpaas.setStream(newLocalStream)
+    }
+  }
 
   useEffect(() => {
     const bootstrap = async (): Promise<void> => {
@@ -207,12 +238,10 @@ export const Meeting = (): JSX.Element => {
 
       const participant = await createParticipant()
 
-      // TODO (67) Set audioActive and videoActive to true
-      // TODO (68) Get newLocalStream using getNewLocalStream function
-      const localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true
-      })
+      const audioActive = true
+      const videoActive = true
+
+      const localStream = await getNewLocalStream(audioActive, videoActive)
 
       setParticipant(participant)
       setLocalStream(localStream)
@@ -280,7 +309,7 @@ export const Meeting = (): JSX.Element => {
           remoteParticipantsIds={remoteParticipantsIds}
           streamsInfo={streamsInfo}
           remoteTransceiversConfig={remoteTransceiversConfig}
-          // TODO (69) Add sinkId prop with sinkId value
+          sinkId={sinkId}
         />
       )}
 
@@ -292,14 +321,26 @@ export const Meeting = (): JSX.Element => {
         {isStreamActive(localStream) && selfie}
       </div>
 
-      {/* TODO (70) Add Settings component with settingsOpen, onCancel and onSave props */}
+      <Settings
+        isOpen={settingsOpen}
+        onCancel={() => {
+          setSettingOpen(false)
+        }}
+        onSave={() => {
+          handleSaveSettings().catch((e) => {
+            console.error(e)
+          })
+        }}
+      />
 
       {vpaas != null && (
         <Toolbar
           vpaas={vpaas}
           localStream={localStream}
           onLocalStreamChange={setLocalStream}
-          // TODO (71) Add handleSettingsOpen function to onSettingsOpen prop
+          onSettingsOpen={() => {
+            setSettingOpen(true)
+          }}
         />
       )}
     </div>

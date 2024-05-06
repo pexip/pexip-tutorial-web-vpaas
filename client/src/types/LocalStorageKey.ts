@@ -1,3 +1,7 @@
-// TODO (01) Define prefix for keys
+const prefix = 'vpaas-tutorial'
 
-// TODO (02) Define LocalStorageKey enum with VideoInputKey, AudioInputKey and AudioOutputKey
+export enum LocalStorageKey {
+  VideoInputKey = `${prefix}:videoInput`,
+  AudioInputKey = `${prefix}:audioInput`,
+  AudioOutputKey = `${prefix}:audioOutput`
+}
