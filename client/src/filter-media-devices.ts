@@ -1,17 +1,37 @@
-// TODO (03) Import LocalStorageKey
+import { LocalStorageKey } from './types/LocalStorageKey'
 
-// TODO (04) Define DevicesInfo interface with videoInput, audioInput and audioOutput properties
+interface DevicesInfo {
+  videoInput: MediaDeviceInfo | undefined
+  audioInput: MediaDeviceInfo | undefined
+  audioOutput: MediaDeviceInfo | undefined
+}
 
-// TODO (05) Define filterMediaDevices function with devices parameter of MediaDeviceInfo[] type and DevicesInfo return type
+export const filterMediaDevices = async (
+  devices: MediaDeviceInfo[]
+): Promise<DevicesInfo> => {
+  const videoInputId = localStorage.getItem(LocalStorageKey.VideoInputKey)
+  const audioInputId = localStorage.getItem(LocalStorageKey.AudioInputKey)
+  const audioOutputId = localStorage.getItem(LocalStorageKey.AudioOutputKey)
 
-// TODO (06) Get videoInputId, audioInputId and audioOutputId from localStorage
+  let videoInput = devices.find((device) => device.deviceId === videoInputId)
+  let audioInput = devices.find((device) => device.deviceId === audioInputId)
+  let audioOutput = devices.find((device) => device.deviceId === audioOutputId)
 
-// TODO (07) Find videoInput, audioInput and audioOutput from devices based on their deviceIds
+  if (videoInput == null) {
+    videoInput = devices.find((device) => device.kind === 'videoinput')
+  }
 
-// TODO (08) If videoInput is null, find videoInput from devices based on kind 'videoinput'
+  if (audioInput == null) {
+    audioInput = devices.find((device) => device.kind === 'audioinput')
+  }
 
-// TODO (09) If audioInput is null, find audioInput from devices based on kind 'audioinput'
+  if (audioOutput == null) {
+    audioOutput = devices.find((device) => device.kind === 'audiooutput')
+  }
 
-// TODO (10) If audioOutput is null, find audioOutput from devices based on kind 'audiooutput'
-
-// TODO (11) Return DevicesInfo object with videoInput, audioInput and audioOutput
+  return {
+    videoInput,
+    audioInput,
+    audioOutput
+  }
+}

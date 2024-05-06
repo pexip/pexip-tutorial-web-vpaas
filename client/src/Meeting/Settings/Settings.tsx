@@ -1,43 +1,120 @@
-import { Modal } from '@pexip/components'
-// TODO (12) Import all dependencies
+import { useEffect, useState } from 'react'
+import { Bar, Button, Modal } from '@pexip/components'
+import { DevicesSelection, Selfview } from '@pexip/media-components'
+import { type MediaDeviceInfoLike } from '@pexip/media-control'
+import { LocalStorageKey } from '../../types/LocalStorageKey'
+import { filterMediaDevices } from '../../filter-media-devices'
 
 import './Settings.css'
 
-// TODO (13) Define SettingsProps interface with isOpen, onCancel and onSave properties
+interface SettingsProps {
+  isOpen: boolean
+  onCancel: () => void
+  onSave: () => void
+}
 
-// TODO (14) Define Settings functional component with SettingsProps parameter
-export const Settings = (): JSX.Element => {
-  // TODO (15) Define localStream and setLocalStream using useState hook with MediaStream type
-  // TODO (16) Define devices and setDevices using useState hook with MediaDeviceInfoLike[] type
-  // TODO (17) Define videoInput, setVideoInput, audioInput, setAudioInput, audioOutput and setAudioOutput using useState hook with MediaDeviceInfoLike type
+export const Settings = (props: SettingsProps): JSX.Element => {
+  const [localStream, setLocalStream] = useState<MediaStream>()
 
-  // TODO (18) Define handleCancel function with void return type
-  // TODO (19) Stop all tracks of localStream in handleCancel function
-  // TODO (20) Call onCancel function in handleCancel function
+  const [devices, setDevices] = useState<MediaDeviceInfoLike[]>([])
 
-  // TODO (21) Define handleSave function with void return type
-  // TODO (22) Set videoInput, audioInput and audioOutput in localStorage
-  // TODO (23) Stop all tracks of localStream in handleSave function
-  // TODO (24) Call onSave function in handleSave function
+  const [videoInput, setVideoInput] = useState<MediaDeviceInfoLike>()
+  const [audioInput, setAudioInput] = useState<MediaDeviceInfoLike>()
+  const [audioOutput, setAudioOutput] = useState<MediaDeviceInfoLike>()
 
-  // TODO (25) Define requestVideo function with Promise<void> return type
-  // TODO (26) Get devices using navigator.mediaDevices.enumerateDevices
-  // TODO (27) Set devices using setDevices
-  // TODO (28) Filter devices using filterMediaDevices function
-  // TODO (29) Set videoInput, audioInput and audioOutput using setVideoInput, setAudioInput and setAudioOutput
-  // TODO (30) Get localStream using navigator.mediaDevices.getUserMedia with video deviceId
-  // TODO (31) Set localStream using setLocalStream
+  const handleCancel = (): void => {
+    localStream?.getTracks().forEach((track) => {
+      track.stop()
+    })
+    props.onCancel()
+  }
 
-  // TODO (32) Define useEffect hook with props.isOpen dependency
-  // TODO (33) Call requestVideo function in useEffect hook
+  const handleSave = (): void => {
+    localStorage.setItem(
+      LocalStorageKey.VideoInputKey,
+      videoInput?.deviceId ?? ''
+    )
+    localStorage.setItem(
+      LocalStorageKey.AudioInputKey,
+      audioInput?.deviceId ?? ''
+    )
+    localStorage.setItem(
+      LocalStorageKey.AudioOutputKey,
+      audioOutput?.deviceId ?? ''
+    )
+    localStream?.getTracks().forEach((track) => {
+      track.stop()
+    })
+    props.onSave()
+  }
+
+  const requestVideo = async (): Promise<void> => {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    setDevices(devices)
+
+    const filteredDevices = await filterMediaDevices(devices)
+
+    setVideoInput(filteredDevices.videoInput)
+    setAudioInput(filteredDevices.audioInput)
+    setAudioOutput(filteredDevices.audioOutput)
+
+    const localStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        deviceId: videoInput?.deviceId
+      }
+    })
+    setLocalStream(localStream)
+  }
+
+  useEffect(() => {
+    if (props.isOpen) {
+      requestVideo().catch((e) => {
+        console.error(e)
+      })
+    }
+  }, [props.isOpen])
 
   return (
-    // TODO (34) Add isOpen prop to Modal component and handleCancel function to onClose prop
-    <Modal isOpen={true} className="Settings">
-      {/*  TODO (35) Add h3 element with Settings text */}
-      {/*  TODO (36) Add Selfview component with localMediaStream and isMirrored props */}
-      {/*  TODO (37) Add DevicesSelection component with devices, videoInput, audioInput, audioOutput, onVideoInputChange, onAudioInputChange, onAudioOutputChange and setShowHelpVideo props */}
-      {/*  TODO (38) Add Bar component with Button components to cancel and save the changes */}
+    <Modal isOpen={props.isOpen} className="Settings" onClose={handleCancel}>
+      <h3>Settings</h3>
+
+      <Selfview
+        isVideoInputMuted={false}
+        shouldShowUserAvatar={false}
+        username="Video"
+        localMediaStream={localStream}
+        isMirrored={true}
+      />
+
+      <DevicesSelection
+        devices={devices}
+        videoInputError={{
+          title: '',
+          description: undefined,
+          deniedDevice: undefined
+        }}
+        audioInputError={{
+          title: '',
+          description: undefined,
+          deniedDevice: undefined
+        }}
+        videoInput={videoInput}
+        audioInput={audioInput}
+        audioOutput={audioOutput}
+        onVideoInputChange={setVideoInput}
+        onAudioInputChange={setAudioInput}
+        onAudioOutputChange={setAudioOutput}
+        setShowHelpVideo={() => {}}
+      />
+
+      <Bar className="ButtonBar">
+        <Button onClick={handleCancel} modifier="fullWidth" variant="tertiary">
+          Cancel
+        </Button>
+        <Button title="Save" onClick={handleSave} modifier="fullWidth">
+          Save
+        </Button>
+      </Bar>
     </Modal>
   )
 }
