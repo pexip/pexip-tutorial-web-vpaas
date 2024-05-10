@@ -10,6 +10,8 @@ interface ToolbarProps {
   vpaas: Vpaas
   localStream: MediaStream | undefined
   onLocalStreamChange: (stream: MediaStream | undefined) => void
+  // TODO (10) Add presentationStream property to ToolbarProps type
+  // TODO (11) Add onPresentationStreamChange property to ToolbarProps type
   onSettingsOpen: () => void
 }
 
@@ -76,6 +78,10 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
     setVideoMuted(!videoMuted)
   }
 
+  // TODO (12) Add handlePressShareScreen function
+
+  // TODO (13) Add handleEndShareScreen function
+
   const handlePressDisconnect = (): void => {
     props.localStream?.getTracks().forEach((track) => {
       track.stop()
@@ -133,6 +139,8 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
           <Icon source={IconTypes.IconSettings} />
         </Button>
       </Tooltip>
+
+      {/* TODO (14) Add share screen button */}
 
       <Tooltip text="Disconnect">
         <Button

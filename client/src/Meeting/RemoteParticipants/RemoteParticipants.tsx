@@ -30,6 +30,7 @@ export const RemoteParticipants = (
       )
     })?.mid
     const videoMid = streamsInfo.find((streamInfo) => {
+      // TODO (04) Add check for semantic === 'main'
       return (
         streamInfo.participantId === participantId &&
         streamInfo.type === 'video'
@@ -66,6 +67,9 @@ export const RemoteParticipants = (
     }
   }
 
+  // TODO (05) Filter out streams with semantic === 'presentation' and mid != null
+
+  // TODO (06) Add length of presentationsInfo to the totalStreams
   const totalStreams = remoteParticipantsIds.length
   const columns = Math.ceil(Math.sqrt(totalStreams))
   const md = Math.max(Math.round(12 / columns), 1) as any
@@ -80,9 +84,12 @@ export const RemoteParticipants = (
         videoStream={videoStream}
         key={participantId}
         sinkId={props.sinkId}
+        // TODO (07) Add semantic="main" to Participant component
       />
     )
   })
+
+  // TODO (08) Create Participant components for presentations
 
   return (
     <Grid
@@ -93,6 +100,7 @@ export const RemoteParticipants = (
       }}
     >
       {participants}
+      {/* TODO (09) Add presentations to the grid */}
     </Grid>
   )
 }
