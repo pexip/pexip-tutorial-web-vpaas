@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-// TODO (07): Import Select component from the @pexip/components package
-import { Bar, Button, Modal } from '@pexip/components'
+import { Bar, Button, Modal, Select } from '@pexip/components'
 import { DevicesSelection, Selfview } from '@pexip/media-components'
 import { type MediaDeviceInfoLike } from '@pexip/media-control'
 import { LocalStorageKey } from '../../types/LocalStorageKey'
 import { filterMediaDevices } from '../../filter-media-devices'
-// TODO (08): Import RTPStreamId from the './RTPStreamId' file
+import { RTPStreamId } from '../../types/RTPStreamId'
 
 import './Settings.css'
 
@@ -24,7 +23,9 @@ export const Settings = (props: SettingsProps): JSX.Element => {
   const [audioInput, setAudioInput] = useState<MediaDeviceInfoLike>()
   const [audioOutput, setAudioOutput] = useState<MediaDeviceInfoLike>()
 
-  // TODO (09) Define a new state variable named incomingVideoQuality of type RTPStreamId
+  const [incomingVideoQuality, setIncomingVideoQuality] = useState<RTPStreamId>(
+    RTPStreamId.High
+  )
 
   const handleCancel = (): void => {
     localStream?.getTracks().forEach((track) => {
@@ -46,7 +47,10 @@ export const Settings = (props: SettingsProps): JSX.Element => {
       LocalStorageKey.AudioOutputKey,
       audioOutput?.deviceId ?? ''
     )
-    // TODO (10) Save the incomingVideoQuality state variable to the local storage
+    localStorage.setItem(
+      LocalStorageKey.IncomingVideoQualityKey,
+      incomingVideoQuality
+    )
     localStream?.getTracks().forEach((track) => {
       track.stop()
     })
@@ -77,8 +81,12 @@ export const Settings = (props: SettingsProps): JSX.Element => {
         console.error(e)
       })
 
-      // TODO (11) Load the incoming video quality from the local storage
-      // TODO (12) Set the incomingVideoQuality state variable to the loaded value
+      const quality: RTPStreamId = localStorage.getItem(
+        LocalStorageKey.IncomingVideoQualityKey
+      ) as RTPStreamId
+      if (quality != null) {
+        setIncomingVideoQuality(quality)
+      }
     }
   }, [props.isOpen])
 
@@ -115,7 +123,18 @@ export const Settings = (props: SettingsProps): JSX.Element => {
         setShowHelpVideo={() => {}}
       />
 
-      {/* TODO (13) Add a Select component to select the incoming video quality */}
+      <Select
+        className="IncomingVideoQuality"
+        label="Incoming Video Quality"
+        value={incomingVideoQuality}
+        onValueChange={(id) => {
+          setIncomingVideoQuality(id as RTPStreamId)
+        }}
+        options={[
+          { id: RTPStreamId.High, label: 'High' },
+          { id: RTPStreamId.Low, label: 'Low' }
+        ]}
+      />
 
       <Bar className="ButtonBar">
         <Button onClick={handleCancel} modifier="fullWidth" variant="tertiary">

@@ -7,8 +7,11 @@ import {
   type Vpaas,
   type RosterEntry
 } from '@pexip/vpaas-sdk'
-// TODO (14) Import MediaEncodingParameters type from '@pexip/peer-connection' package
-import type { MediaInit, TransceiverConfig } from '@pexip/peer-connection'
+import type {
+  MediaInit,
+  TransceiverConfig,
+  MediaEncodingParameters
+} from '@pexip/peer-connection'
 import { type Participant } from '@pexip/vpaas-api'
 import { type StreamInfo } from '../types/StreamInfo'
 import { config } from '../config'
@@ -17,8 +20,8 @@ import { Selfview } from '@pexip/media-components'
 import { Toolbar } from './Toolbar/Toolbar'
 import { filterMediaDevices } from '../filter-media-devices'
 import { Settings } from './Settings/Settings'
-// TODO (15) Import RTPStreamId from the './RTPStreamId' file
-// TODO (16) Import LocalStorageKey from the './LocalStorageKey' file
+import { RTPStreamId } from '../types/RTPStreamId'
+import { LocalStorageKey } from '../types/LocalStorageKey'
 
 import './Meeting.css'
 
@@ -62,13 +65,16 @@ export const Meeting = (): JSX.Element => {
           (streamInfo) => streamInfo.streamId === streamId
         )
         if (!found) {
-          // TODO (17) Get the layers from the stream object
+          let layers = []
+          if ((stream as any)?.layers != null) {
+            layers = (stream as any)?.layers
+          }
 
-          // TODO (18) Add the layers property to the streamInfo object
           streamsInfo.push({
             streamId,
             type: stream.type,
-            participantId
+            participantId,
+            layers
           })
         }
       }
@@ -105,20 +111,25 @@ export const Meeting = (): JSX.Element => {
     setRemoteTransceiversConfig([...remoteTransceiversConfig])
   }
 
-  // TODO (19) Add preferredRid parameter to the subscribeStream function
-  const subscribeStream = async (streamInfo: StreamInfo): Promise<void> => {
-    // TODO (20) Get the requestedRid from the streamInfo object
+  const subscribeStream = async (
+    streamInfo: StreamInfo,
+    preferredRid?: RTPStreamId
+  ): Promise<void> => {
+    const requestedRid = streamInfo.layers?.some(
+      (layer) => layer.rid === preferredRid
+    )
+      ? preferredRid
+      : undefined
 
     const response = await vpaas.requestStream({
       producer_id: streamInfo.participantId,
       stream_id: streamInfo.streamId,
-      // TODO (21) Pass the requestedRid to the requestStream function
-      rid: null,
+      rid: (requestedRid as string) ?? null,
       receive_mid: null
     })
 
     streamInfo.mid = response.receive_mid
-    // TODO (22) Set the rid property of the streamInfo object to the requestedRid
+    streamInfo.rid = requestedRid
     setStreamsInfo([...streamsInfo])
   }
 
@@ -170,8 +181,8 @@ export const Meeting = (): JSX.Element => {
         content: 'main',
         direction: 'sendonly',
         kindOrTrack: mediaStream.getVideoTracks()[0],
-        streams: [mediaStream]
-        // TODO (23) Add sendEncodings property to the video MediaInit object
+        streams: [mediaStream],
+        sendEncodings: getEncodings(mediaStream)
       },
       ...createRecvTransceivers('audio', RECV_AUDIO_COUNT),
       ...createRecvTransceivers('video', RECV_VIDEO_COUNT)
@@ -187,7 +198,29 @@ export const Meeting = (): JSX.Element => {
     vpaas.connect({ mediaInits })
   }
 
-  // TODO (24) Add getEncodings function
+  const getEncodings = (
+    mediaStream: MediaStream
+  ): MediaEncodingParameters[] | undefined => {
+    const [videoTrack] = mediaStream.getVideoTracks()
+    const { width, height } = videoTrack?.getSettings() ?? {}
+    if (width != null && height != null) {
+      return [
+        {
+          rid: RTPStreamId.Low,
+          scaleResolutionDownBy: 4.0,
+          maxWidth: Math.trunc(width / 4),
+          maxHeight: Math.trunc(height / 4)
+        },
+        {
+          rid: RTPStreamId.High,
+          maxWidth: width,
+          maxHeight: height
+        }
+      ]
+    } else {
+      return undefined
+    }
+  }
 
   const isStreamActive = (stream: MediaStream | undefined): boolean => {
     return (
@@ -242,9 +275,26 @@ export const Meeting = (): JSX.Element => {
       setLocalStream(newLocalStream)
       vpaas.setStream(newLocalStream)
 
-      // TODO (25) For each streamInfo object, check if it's a video stream
-      // TODO (26) If it's a video stream, get the preferredRid from the local storage
-      // TODO (27) If the streamInfo object has a different rid property, unsubscribe to it and subscribe it again
+      streamsInfo.forEach((streamInfo) => {
+        if (streamInfo.type === 'video') {
+          const preferredRid =
+            (localStorage.getItem(
+              LocalStorageKey.IncomingVideoQualityKey
+            ) as RTPStreamId) ?? RTPStreamId.High
+
+          if (streamInfo.mid != null && streamInfo.rid !== preferredRid) {
+            unsubscribeStream(streamInfo)
+              .then(() => {
+                subscribeStream(streamInfo, preferredRid).catch((e) => {
+                  console.error(e)
+                })
+              })
+              .catch((e) => {
+                console.error(e)
+              })
+          }
+        }
+      })
     }
   }
 
@@ -286,9 +336,11 @@ export const Meeting = (): JSX.Element => {
           streamInfo.mid == null &&
           streamInfo.participantId !== participant?.id
         ) {
-          // TODO (28) Get the preferredRid from the local storage
-          // TODO (29) Add the preferredRid to the subscribeStream function
-          subscribeStream(streamInfo).catch((e) => {
+          const preferredRid =
+            (localStorage.getItem(
+              LocalStorageKey.IncomingVideoQualityKey
+            ) as RTPStreamId) ?? RTPStreamId.High
+          subscribeStream(streamInfo, preferredRid).catch((e) => {
             console.error(e)
           })
         }
