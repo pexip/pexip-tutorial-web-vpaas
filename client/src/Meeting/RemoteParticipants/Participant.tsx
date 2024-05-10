@@ -8,7 +8,7 @@ interface ParticipantProps {
   audioStream: MediaStream | null
   videoStream: MediaStream | null
   sinkId: string
-  // TODO (02) Add semantic property to ParticipantProps type
+  semantic: 'main' | 'presentation' | 'misc'
 }
 
 export const Participant = (props: ParticipantProps): JSX.Element => {
@@ -32,8 +32,7 @@ export const Participant = (props: ParticipantProps): JSX.Element => {
           className="RemoteVideo"
           title={props.participantId}
           srcObject={props.videoStream}
-          // TODO (03) Change objectFit property to 'cover' if semantic is 'main' otherwise 'contain'
-          style={{ objectFit: 'cover' }}
+          style={{ objectFit: props.semantic === 'main' ? 'cover' : 'contain' }}
         />
       )}
       {(props.videoStream == null || videoMuted) && (

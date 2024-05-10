@@ -10,8 +10,8 @@ interface ToolbarProps {
   vpaas: Vpaas
   localStream: MediaStream | undefined
   onLocalStreamChange: (stream: MediaStream | undefined) => void
-  // TODO (10) Add presentationStream property to ToolbarProps type
-  // TODO (11) Add onPresentationStreamChange property to ToolbarProps type
+  presentationStream: MediaStream | undefined
+  onPresentationStreamChange: (stream: MediaStream | undefined) => void
   onSettingsOpen: () => void
 }
 
@@ -78,9 +78,25 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
     setVideoMuted(!videoMuted)
   }
 
-  // TODO (12) Add handlePressShareScreen function
+  const handlePressShareScreen = async (): Promise<void> => {
+    let stream
+    if (props.presentationStream != null) {
+      props.presentationStream.getVideoTracks().forEach((track) => {
+        track.stop()
+      })
+      props.vpaas.stopPresenting()
+    } else {
+      stream = await navigator.mediaDevices.getDisplayMedia()
+      stream.getVideoTracks()[0].onended = handleEndShareScreen
+      props.vpaas.present(stream)
+    }
+    props.onPresentationStreamChange(stream)
+  }
 
-  // TODO (13) Add handleEndShareScreen function
+  const handleEndShareScreen = (): void => {
+    props.vpaas.stopPresenting()
+    props.onPresentationStreamChange(undefined)
+  }
 
   const handlePressDisconnect = (): void => {
     props.localStream?.getTracks().forEach((track) => {
@@ -140,7 +156,20 @@ export const Toolbar = (props: ToolbarProps): JSX.Element => {
         </Button>
       </Tooltip>
 
-      {/* TODO (14) Add share screen button */}
+      <Tooltip text="Share screen">
+        <Button
+          variant="translucent"
+          modifier="square"
+          onClick={() => {
+            handlePressShareScreen().catch((e) => {
+              console.error(e)
+            })
+          }}
+          isActive={props.presentationStream != null}
+        >
+          <Icon source={IconTypes.IconPresentationOn} />
+        </Button>
+      </Tooltip>
 
       <Tooltip text="Disconnect">
         <Button

@@ -30,10 +30,10 @@ export const RemoteParticipants = (
       )
     })?.mid
     const videoMid = streamsInfo.find((streamInfo) => {
-      // TODO (04) Add check for semantic === 'main'
       return (
         streamInfo.participantId === participantId &&
-        streamInfo.type === 'video'
+        streamInfo.type === 'video' &&
+        streamInfo.semantic === 'main'
       )
     })?.mid
 
@@ -67,10 +67,11 @@ export const RemoteParticipants = (
     }
   }
 
-  // TODO (05) Filter out streams with semantic === 'presentation' and mid != null
+  const presentationsInfo = streamsInfo.filter((streamInfo) => {
+    return streamInfo.semantic === 'presentation' && streamInfo.mid != null
+  })
 
-  // TODO (06) Add length of presentationsInfo to the totalStreams
-  const totalStreams = remoteParticipantsIds.length
+  const totalStreams = remoteParticipantsIds.length + presentationsInfo.length
   const columns = Math.ceil(Math.sqrt(totalStreams))
   const md = Math.max(Math.round(12 / columns), 1) as any
 
@@ -84,12 +85,38 @@ export const RemoteParticipants = (
         videoStream={videoStream}
         key={participantId}
         sinkId={props.sinkId}
-        // TODO (07) Add semantic="main" to Participant component
+        semantic="main"
       />
     )
   })
 
-  // TODO (08) Create Participant components for presentations
+  const presentations = presentationsInfo.map((streamInfo) => {
+    const { participantId, mid } = streamInfo
+
+    const presentationTransceiverConfig =
+      mid != null
+        ? remoteTransceiversConfig.find((transceiverConfig) => {
+            return transceiverConfig.transceiver?.mid === mid
+          })
+        : null
+
+    const presentationStream =
+      presentationTransceiverConfig?.remoteStreams != null
+        ? presentationTransceiverConfig.remoteStreams[0]
+        : null
+
+    return (
+      <Participant
+        participantId={participantId}
+        md={md}
+        audioStream={null}
+        videoStream={presentationStream}
+        key={`${participantId}-presentation`}
+        sinkId={props.sinkId}
+        semantic="presentation"
+      />
+    )
+  })
 
   return (
     <Grid
@@ -100,7 +127,7 @@ export const RemoteParticipants = (
       }}
     >
       {participants}
-      {/* TODO (09) Add presentations to the grid */}
+      {presentations}
     </Grid>
   )
 }
