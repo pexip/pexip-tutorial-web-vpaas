@@ -6,6 +6,7 @@ export interface StreamInfo {
   type: 'audio' | 'video'
   participantId: string
   layers: Layer[]
+  // TODO (01) Add semantic property to StreamInfo type
   mid?: string
   rid?: RTPStreamId
 }
