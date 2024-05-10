@@ -22,7 +22,7 @@ import { filterMediaDevices } from '../filter-media-devices'
 import { Settings } from './Settings/Settings'
 import { RTPStreamId } from '../types/RTPStreamId'
 import { LocalStorageKey } from '../types/LocalStorageKey'
-// TODO (15) Import Video from @pexip/components
+import { Video } from '@pexip/components'
 
 import './Meeting.css'
 
@@ -36,7 +36,7 @@ export const Meeting = (): JSX.Element => {
 
   const [participant, setParticipant] = useState<Participant>()
   const [localStream, setLocalStream] = useState<MediaStream>()
-  // TODO (16) Add presentationStream state
+  const [presentationStream, setPresentationStream] = useState<MediaStream>()
   const [sinkId, setSinkId] = useState<string>('')
 
   const [remoteTransceiversConfig, setRemoteTransceiversConfig] = useState<
@@ -76,8 +76,8 @@ export const Meeting = (): JSX.Element => {
             streamId,
             type: stream.type,
             participantId,
-            layers
-            // TODO (17) Add semantic property to StreamInfo object
+            layers,
+            semantic: stream.semantic
           })
         }
       }
@@ -394,7 +394,12 @@ export const Meeting = (): JSX.Element => {
 
       <div className="PipContainer">
         {isStreamActive(localStream) && selfie}
-        {/* TODO (18) Add presentation stream video component */}
+        {isStreamActive(presentationStream) && (
+          <Video
+            className="PresentationSelfView"
+            srcObject={presentationStream}
+          />
+        )}
       </div>
 
       <Settings
@@ -414,8 +419,8 @@ export const Meeting = (): JSX.Element => {
           vpaas={vpaas}
           localStream={localStream}
           onLocalStreamChange={setLocalStream}
-          // TODO (19) Add presentationStream state
-          // TODO (20) Add onPresentationStreamChange function
+          presentationStream={presentationStream}
+          onPresentationStreamChange={setPresentationStream}
           onSettingsOpen={() => {
             setSettingOpen(true)
           }}
