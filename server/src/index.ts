@@ -1,4 +1,5 @@
 import express, { type RequestHandler } from 'express'
+import helmet from "helmet";
 import cors from 'cors'
 import fs from 'fs'
 import https from 'https'
@@ -10,6 +11,7 @@ import { createApi, withToken } from '@pexip/vpaas-api'
 const port: string = config.get('server.port')
 
 const app = express()
+app.use(helmet())
 
 const createJwt = (): string => {
   const apiAddress: string = config.get('vpaas.apiAddress')
