@@ -1,5 +1,5 @@
 import express, { type RequestHandler } from 'express'
-import helmet from "helmet"
+import helmet from 'helmet'
 import cors from 'cors'
 import fs from 'fs'
 import https from 'https'
@@ -83,13 +83,13 @@ app.post('/meetings/:meetingId/participants', (async (req, res) => {
       return res
         .status(500)
         .send(
-          `Cannot get participants from the meeting ${req.params.meetingId}`
+          `Cannot get participants from the meeting`
         )
     }
   } catch (error) {
     return res
       .status(500)
-      .send(`Cannot get participants from the meeting ${req.params.meetingId}`)
+      .send(`Cannot get participants from the meeting`)
   }
 }) as RequestHandler)
 
